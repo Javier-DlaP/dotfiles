@@ -1,0 +1,31 @@
+FROM archlinux:latest
+
+RUN pacman -Syu --noconfirm --quiet && \
+    pacman -S --noconfirm --needed \
+        sudo curl git base-devel zsh ripgrep fd fzf neovim \
+        starship zoxide zsh-autosuggestions zsh-syntax-highlighting && \
+    pacman -Scc --noconfirm && \
+    yes | pacman -Scc 2>/dev/null || true
+
+# chezmoi
+RUN curl -fsLS get.chezmoi.io | sh -s -- -b /usr/local/bin
+
+RUN useradd -m -s /bin/bash testuser && \
+    echo 'testuser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+COPY . /tmp/dotfiles
+
+RUN mkdir -p /home/testuser/.local/share && \
+    cp -r /tmp/dotfiles /home/testuser/.local/share/chezmoi && \
+    chown -R testuser:testuser /home/testuser/.local/share/chezmoi && \
+    chown -R testuser:testuser /home/testuser
+
+COPY tests/run-tests.sh /tmp/run-tests.sh
+RUN chmod +x /tmp/run-tests.sh
+
+USER testuser
+WORKDIR /home/testuser
+
+RUN chezmoi apply --verbose 2>&1 || echo "[test] chezmoi apply completed with warnings"
+
+CMD ["/tmp/run-tests.sh"]

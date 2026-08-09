@@ -1,0 +1,44 @@
+# ~/.zshrc: executed by zsh(1) for interactive shells
+
+# Source shared configuration
+if [ -f "$HOME/.config/shell/common.sh" ]; then
+    . "$HOME/.config/shell/common.sh"
+fi
+
+# ---------------------------------------------------------------------------
+# Zsh-specific: autosuggestions
+# ---------------------------------------------------------------------------
+_zsh_autosuggestions_paths=(
+    /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+    /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+    /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh
+)
+if command -v brew >/dev/null 2>&1; then
+    _zsh_autosuggestions_paths+=("$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh")
+fi
+for _p in "${_zsh_autosuggestions_paths[@]}"; do
+    if [ -f "$_p" ]; then
+        . "$_p"
+        break
+    fi
+done
+unset _zsh_autosuggestions_paths _p
+
+# ---------------------------------------------------------------------------
+# Zsh-specific: syntax highlighting (must be last)
+# ---------------------------------------------------------------------------
+_zsh_syntax_paths=(
+    /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+    /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+    /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.plugin.zsh
+)
+if command -v brew >/dev/null 2>&1; then
+    _zsh_syntax_paths+=("$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh")
+fi
+for _p in "${_zsh_syntax_paths[@]}"; do
+    if [ -f "$_p" ]; then
+        . "$_p"
+        break
+    fi
+done
+unset _zsh_syntax_paths _p

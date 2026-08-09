@@ -1,0 +1,112 @@
+#!/bin/sh
+# chezmoi onchange script: installs packages based on host OS
+
+set -e
+
+PACKAGES_DIR="$HOME/.local/share/chezmoi/packages"
+LOG_FILE="$HOME/.local/share/chezmoi/install-packages.log"
+
+detect_os() {
+    case "$(uname -s)" in
+        Darwin) echo "darwin" ;;
+        Linux)
+            if [ -f /etc/os-release ]; then
+                . /etc/os-release
+                case "$ID" in
+                    debian|ubuntu|linuxmint|pop|elementary|zorin) echo "debian" ;;
+                    arch|manjaro|endeavouros|cachyos) echo "arch" ;;
+                    *) echo "unknown-linux" ;;
+                esac
+            else
+                echo "unknown-linux"
+            fi
+            ;;
+        *) echo "unknown" ;;
+    esac
+}
+
+install_debian() {
+    echo "[chezmoi] Detected Debian/Ubuntu. Installing packages with apt..."
+    sudo apt-get update -qq
+    # Ensure basic tooling
+    sudo apt-get install -y -qq curl gnupg ca-certificates lsb-release
+
+    # Neovim: use unstable PPA for a recent version on older Ubuntu/Debian
+    if ! command -v nvim >/dev/null 2>&1; then
+        sudo add-apt-repository -y ppa:neovim-ppa/unstable 2>/dev/null || true
+    fi
+
+    # Starship: install via official script
+    if ! command -v starship >/dev/null 2>&1; then
+        curl -sS https://starship.rs/install.sh | sh -s -- -y
+    fi
+
+    # Zoxide: install via official script
+    if ! command -v zoxide >/dev/null 2>&1; then
+        curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+    fi
+
+    # fzf: install from git if not in repos
+    if ! command -v fzf >/dev/null 2>&1; then
+        if [ ! -d "$HOME/.fzf" ]; then
+            git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
+        fi
+        "$HOME/.fzf/install" --all --no-update-rc --no-bash --no-zsh --no-fish 2>/dev/null || true
+    fi
+
+    # Main apt packages (skip starship/zoxide/fzf if installed via scripts above)
+    xargs -a "$PACKAGES_DIR/Debian.txt" -I {} sh -c '
+        case "{}" in
+            starship|zoxide) ;; # handled above
+            fzf) ;;            # handled above
+            *) sudo apt-get install -y -qq "{}" 2>/dev/null || echo "  [warn] apt could not install: {}" ;;
+        esac
+    '
+
+    echo "[chezmoi] Debian/Ubuntu packages installed."
+}
+
+install_arch() {
+    echo "[chezmoi] Detected Arch Linux. Installing packages with pacman..."
+    sudo pacman -Syu --noconfirm --needed --quiet
+
+    xargs -a "$PACKAGES_DIR/Arch.txt" -I {} sh -c '
+        sudo pacman -S --noconfirm --needed "{}" 2>/dev/null || echo "  [warn] pacman could not install: {}"
+    '
+
+    echo "[chezmoi] Arch Linux packages installed."
+}
+
+install_darwin() {
+    echo "[chezmoi] Detected macOS. Installing packages with Homebrew..."
+
+    if ! command -v brew >/dev/null 2>&1; then
+        echo "[chezmoi] Homebrew not found. Installing Homebrew..."
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        if [ -f /opt/homebrew/bin/brew ]; then
+            eval "$(/opt/homebrew/bin/brew shellenv)"
+        fi
+    fi
+
+    brew bundle --file="$PACKAGES_DIR/Brewfile" --no-lock
+
+    echo "[chezmoi] macOS packages installed."
+}
+
+main() {
+    OS=$(detect_os)
+    echo "[chezmoi] Detected OS: $OS" | tee "$LOG_FILE"
+
+    case "$OS" in
+        debian) install_debian 2>&1 | tee -a "$LOG_FILE" ;;
+        arch)   install_arch   2>&1 | tee -a "$LOG_FILE" ;;
+        darwin) install_darwin 2>&1 | tee -a "$LOG_FILE" ;;
+        *)
+            echo "[chezmoi] Unsupported OS: $OS. Skipping package installation." | tee -a "$LOG_FILE"
+            ;;
+    esac
+
+    echo "[chezmoi] Package installation complete." | tee -a "$LOG_FILE"
+}
+
+main

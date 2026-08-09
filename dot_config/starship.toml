@@ -1,0 +1,49 @@
+add_newline = false
+
+[character]
+success_symbol = "[\\$](bold green)"
+error_symbol = "[\\$](bold red)"
+vimcmd_symbol = "[\\<](bold green)"
+
+[directory]
+truncation_length = 5
+truncate_to_repo = true
+
+[git_branch]
+symbol = ""
+
+[git_status]
+conflicted = "="
+ahead = "⇡${count}"
+behind = "⇣${count}"
+diverged = "⇕⇡${ahead_count}⇣${behind_count}"
+up_to_date = ""
+untracked = "?${count}"
+stashed = "\\$"
+modified = "!${count}"
+staged = "+${count}"
+renamed = "»${count}"
+deleted = "✘${count}"
+
+[nodejs]
+format = "via [${version}](bold green) "
+
+[python]
+format = "via [${version}](bold green) "
+
+[rust]
+format = "via [${version}(bold red) "
+
+[golang]
+format = "via [${version}(bold cyan) "
+
+[kubernetes]
+format = 'on [${context}](bold purple) '
+disabled = false
+
+[aws]
+format = 'on [${profile}](bold yellow) '
+
+[cmd_duration]
+min_time = 2000
+format = "took [$duration]($style) "

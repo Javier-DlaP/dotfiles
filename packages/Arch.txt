@@ -1,0 +1,12 @@
+base-devel
+curl
+git
+ripgrep
+fd
+fzf
+neovim
+zsh
+starship
+zoxide
+zsh-autosuggestions
+zsh-syntax-highlighting

@@ -1,0 +1,17 @@
+# chezmoi
+.chezmoi*.toml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Docker
+.DS_Store

@@ -1,0 +1,12 @@
+curl
+git
+build-essential
+ripgrep
+fd-find
+fzf
+neovim
+zsh
+starship
+zoxide
+zsh-autosuggestions
+zsh-syntax-highlighting
