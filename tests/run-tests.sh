@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+export PATH="$HOME/.local/bin:$PATH"
+
 PASS=0
 FAIL=0
 RED='\033[0;31m'
@@ -101,6 +103,16 @@ if bash --rcfile "$HOME/.bashrc" -ic 'exit 0' 2>&1; then
     PASS=$((PASS + 1))
 else
     echo -e "  ${RED}FAIL${NC} bashrc loads without errors"
+    FAIL=$((FAIL + 1))
+fi
+
+echo ""
+echo "--- Full zshrc load ---"
+if zsh -c 'ZDOTDIR="$HOME" . "$HOME/.zshrc"' 2>&1; then
+    echo -e "  ${GREEN}PASS${NC} zshrc loads without errors"
+    PASS=$((PASS + 1))
+else
+    echo -e "  ${RED}FAIL${NC} zshrc loads without errors"
     FAIL=$((FAIL + 1))
 fi
 

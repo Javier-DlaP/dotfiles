@@ -6,7 +6,6 @@ export EDITOR="${EDITOR:-nvim}"
 export VISUAL="${VISUAL:-nvim}"
 export PAGER="${PAGER:-less}"
 export LANG="${LANG:-en_US.UTF-8}"
-export LC_ALL="${LANG:-en_US.UTF-8}"
 
 # ---------------------------------------------------------------------------
 # Path
@@ -16,7 +15,13 @@ case "$(uname -s)" in
         PATH="$HOME/.local/bin:$PATH"
         ;;
     Darwin)
-        PATH="/opt/homebrew/bin:$HOME/.local/bin:$PATH"
+        if [ -d /opt/homebrew/bin ]; then
+            PATH="/opt/homebrew/bin:$HOME/.local/bin:$PATH"
+        elif [ -d /usr/local/bin ]; then
+            PATH="/usr/local/bin:$HOME/.local/bin:$PATH"
+        else
+            PATH="$HOME/.local/bin:$PATH"
+        fi
         ;;
 esac
 export PATH
@@ -35,12 +40,15 @@ alias egrep='egrep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias df='df -h'
 alias du='du -h'
-alias free='free -h'
 alias cp='cp -iv'
 alias mv='mv -iv'
 alias rm='rm -iv'
 alias mkdir='mkdir -pv'
 alias diff='diff --color=auto'
+
+if command -v free >/dev/null 2>&1; then
+    alias free='free -h'
+fi
 
 if command -v bat >/dev/null 2>&1; then
     alias cat='bat --paging=never'
@@ -110,29 +118,23 @@ cht() {
 }
 
 # ---------------------------------------------------------------------------
-# FZF
+# FZF (bash key-bindings and completions only)
 # ---------------------------------------------------------------------------
 if command -v fzf >/dev/null 2>&1; then
-    case "$(ps -p $$ -o comm= 2>/dev/null)" in
-        bash|-bash|*/bash)
-            if [ -f /usr/share/doc/fzf/examples/key-bindings.bash ]; then
-                . /usr/share/doc/fzf/examples/key-bindings.bash
-            elif [ -f /usr/share/fzf/key-bindings.bash ]; then
-                . /usr/share/fzf/key-bindings.bash
-            elif [ -f /usr/share/fzf/shell/key-bindings.bash ]; then
-                . /usr/share/fzf/shell/key-bindings.bash
-            fi
-
-            if [ -f /usr/share/doc/fzf/examples/completion.bash ]; then
-                . /usr/share/doc/fzf/examples/completion.bash
-            elif [ -f /usr/share/fzf/completion.bash ]; then
-                . /usr/share/fzf/completion.bash
-            elif [ -f /usr/share/bash-completion/completions/fzf ]; then
-                . /usr/share/bash-completion/completions/fzf
-            fi
-            ;;
-    esac
-
+    if [ -n "${BASH_VERSION:-}" ]; then
+        for f in \
+            /usr/share/doc/fzf/examples/key-bindings.bash \
+            /usr/share/fzf/key-bindings.bash \
+            /usr/share/fzf/shell/key-bindings.bash; do
+            [ -f "$f" ] && { . "$f"; break; }
+        done
+        for f in \
+            /usr/share/doc/fzf/examples/completion.bash \
+            /usr/share/fzf/completion.bash \
+            /usr/share/bash-completion/completions/fzf; do
+            [ -f "$f" ] && { . "$f"; break; }
+        done
+    fi
     export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
     export FZF_CTRL_T_OPTS="--preview 'bat --style=numbers --color=always {} 2>/dev/null || cat {}'"
 fi
@@ -141,18 +143,20 @@ fi
 # Starship Prompt
 # ---------------------------------------------------------------------------
 if command -v starship >/dev/null 2>&1; then
-    case "$(ps -p $$ -o comm= 2>/dev/null)" in
-        zsh|*/zsh)  eval "$(starship init zsh)"  ;;
-        *)          eval "$(starship init bash)" ;;
-    esac
+    if [ -n "${ZSH_VERSION:-}" ]; then
+        eval "$(starship init zsh)"
+    else
+        eval "$(starship init bash)"
+    fi
 fi
 
 # ---------------------------------------------------------------------------
 # Zoxide
 # ---------------------------------------------------------------------------
 if command -v zoxide >/dev/null 2>&1; then
-    case "$(ps -p $$ -o comm= 2>/dev/null)" in
-        zsh|*/zsh)  eval "$(zoxide init zsh --cmd cd)"  ;;
-        *)          eval "$(zoxide init bash --cmd cd)" ;;
-    esac
+    if [ -n "${ZSH_VERSION:-}" ]; then
+        eval "$(zoxide init zsh --cmd cd)"
+    else
+        eval "$(zoxide init bash --cmd cd)"
+    fi
 fi

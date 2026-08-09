@@ -2,13 +2,10 @@ FROM --platform=linux/amd64 archlinux/archlinux:latest
 
 RUN echo 'DisableSandbox' >> /etc/pacman.conf && \
     pacman -Syu --noconfirm --quiet && \
-    pacman -S --noconfirm --needed \
-        sudo curl git base-devel zsh ripgrep fd fzf neovim \
-        starship zoxide zsh-autosuggestions zsh-syntax-highlighting && \
+    pacman -S --noconfirm --needed sudo curl git && \
     pacman -Scc --noconfirm && \
     yes | pacman -Scc 2>/dev/null || true
 
-# chezmoi
 RUN curl -fsLS get.chezmoi.io | sh -s -- -b /usr/local/bin
 
 RUN useradd -m -s /bin/bash testuser && \

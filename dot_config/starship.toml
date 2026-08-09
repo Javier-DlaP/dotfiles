@@ -32,10 +32,10 @@ format = "via [${version}](bold green) "
 format = "via [${version}](bold green) "
 
 [rust]
-format = "via [${version}(bold red) "
+format = "via [${version}](bold red) "
 
 [golang]
-format = "via [${version}(bold cyan) "
+format = "via [${version}](bold cyan) "
 
 [kubernetes]
 format = 'on [${context}](bold purple) '

@@ -12,6 +12,3 @@ Thumbs.db
 
 # Logs
 *.log
-
-# Docker
-.DS_Store

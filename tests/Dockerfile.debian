@@ -4,8 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -qq && \
     apt-get install -y -qq --no-install-recommends \
-        sudo curl git ca-certificates gnupg lsb-release \
-        zsh ripgrep fzf fd-find build-essential locales && \
+        sudo curl git ca-certificates gnupg lsb-release locales && \
     echo 'en_US.UTF-8 UTF-8' > /etc/locale.gen && \
     locale-gen en_US.UTF-8 && \
     update-locale LANG=en_US.UTF-8 && \
@@ -13,32 +12,9 @@ RUN apt-get update -qq && \
     rm -rf /var/lib/apt/lists/*
 
 ENV LANG=en_US.UTF-8
-ENV LC_ALL=en_US.UTF-8
 
-# starship
-RUN curl -sS https://starship.rs/install.sh | sh -s -- -y && \
-    mv /root/.local/bin/starship /usr/local/bin/starship || \
-    cp /usr/local/bin/starship /usr/local/bin/starship 2>/dev/null || true
+RUN curl -fsLS get.chezmoi.io | sh -s -- -b /usr/local/bin
 
-# zoxide
-RUN curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh && \
-    mv /root/.local/bin/zoxide /usr/local/bin/zoxide 2>/dev/null || true
-
-# neovim via appimage in PATH
-RUN curl -sLo /usr/local/bin/nvim https://github.com/neovim/neovim/releases/latest/download/nvim.appimage && \
-    chmod +x /usr/local/bin/nvim || true
-
-# zsh plugins (place where common.sh expects them)
-RUN mkdir -p /usr/share/zsh-autosuggestions /usr/share/zsh-syntax-highlighting && \
-    git clone --depth 1 https://github.com/zsh-users/zsh-autosuggestions.git \
-        /usr/share/zsh-autosuggestions && \
-    git clone --depth 1 https://github.com/zsh-users/zsh-syntax-highlighting.git \
-        /usr/share/zsh-syntax-highlighting
-
-# chezmoi
-RUN sh -c "$(curl -fsLS get.chezmoi.io)" -- -b /usr/local/bin
-
-# Create a test user (non-root for realistic test)
 RUN useradd -m -s /bin/bash testuser && \
     echo 'testuser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 

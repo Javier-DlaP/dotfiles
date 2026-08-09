@@ -3,8 +3,10 @@
 
 set -e
 
-PACKAGES_DIR="$HOME/.local/share/chezmoi/packages"
-LOG_FILE="$HOME/.local/share/chezmoi/install-packages.log"
+PACKAGES_DIR="${CHEZMOI_SOURCE_DIR:-$HOME/.local/share/chezmoi}/packages"
+LOG_FILE="${HOME}/.local/share/chezmoi/install-packages.log"
+
+mkdir -p "$(dirname "$LOG_FILE")"
 
 detect_os() {
     case "$(uname -s)" in
@@ -28,40 +30,28 @@ detect_os() {
 install_debian() {
     echo "[chezmoi] Detected Debian/Ubuntu. Installing packages with apt..."
     sudo apt-get update -qq
-    # Ensure basic tooling
-    sudo apt-get install -y -qq curl gnupg ca-certificates lsb-release
 
-    # Neovim: use unstable PPA for a recent version on older Ubuntu/Debian
-    if ! command -v nvim >/dev/null 2>&1; then
+    if ! grep -rq "neovim-ppa" /etc/apt/sources.list.d/ 2>/dev/null; then
+        sudo apt-get install -y -qq software-properties-common 2>/dev/null || true
         sudo add-apt-repository -y ppa:neovim-ppa/unstable 2>/dev/null || true
+        sudo apt-get update -qq
     fi
 
-    # Starship: install via official script
+    # Packages handled by apt
+    xargs -a "$PACKAGES_DIR/Debian.txt" -I {} sh -c '
+        sudo apt-get install -y -qq "{}" 2>/dev/null || echo "  [warn] apt could not install: {}"
+    '
+
+    # starship
     if ! command -v starship >/dev/null 2>&1; then
-        curl -sS https://starship.rs/install.sh | sh -s -- -y
+        mkdir -p "$HOME/.local/bin"
+        curl -sS https://starship.rs/install.sh | sh -s -- -y -b "$HOME/.local/bin"
     fi
 
-    # Zoxide: install via official script
+    # zoxide
     if ! command -v zoxide >/dev/null 2>&1; then
         curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
     fi
-
-    # fzf: install from git if not in repos
-    if ! command -v fzf >/dev/null 2>&1; then
-        if [ ! -d "$HOME/.fzf" ]; then
-            git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
-        fi
-        "$HOME/.fzf/install" --all --no-update-rc --no-bash --no-zsh --no-fish 2>/dev/null || true
-    fi
-
-    # Main apt packages (skip starship/zoxide/fzf if installed via scripts above)
-    xargs -a "$PACKAGES_DIR/Debian.txt" -I {} sh -c '
-        case "{}" in
-            starship|zoxide) ;; # handled above
-            fzf) ;;            # handled above
-            *) sudo apt-get install -y -qq "{}" 2>/dev/null || echo "  [warn] apt could not install: {}" ;;
-        esac
-    '
 
     echo "[chezmoi] Debian/Ubuntu packages installed."
 }
@@ -85,6 +75,8 @@ install_darwin() {
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         if [ -f /opt/homebrew/bin/brew ]; then
             eval "$(/opt/homebrew/bin/brew shellenv)"
+        elif [ -f /usr/local/bin/brew ]; then
+            eval "$(/usr/local/bin/brew shellenv)"
         fi
     fi
 
@@ -102,7 +94,8 @@ main() {
         arch)   install_arch   2>&1 | tee -a "$LOG_FILE" ;;
         darwin) install_darwin 2>&1 | tee -a "$LOG_FILE" ;;
         *)
-            echo "[chezmoi] Unsupported OS: $OS. Skipping package installation." | tee -a "$LOG_FILE"
+            echo "[chezmoi] OS '$OS' is not supported for automatic package installation." | tee -a "$LOG_FILE"
+            echo "[chezmoi] Please install manually: curl git ripgrep fd fzf neovim zsh starship zoxide zsh-autosuggestions zsh-syntax-highlighting" | tee -a "$LOG_FILE"
             ;;
     esac
 
