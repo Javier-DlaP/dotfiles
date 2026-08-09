@@ -1,6 +1,7 @@
-FROM archlinux:latest
+FROM --platform=linux/amd64 archlinux/archlinux:latest
 
-RUN pacman -Syu --noconfirm --quiet && \
+RUN echo 'DisableSandbox' >> /etc/pacman.conf && \
+    pacman -Syu --noconfirm --quiet && \
     pacman -S --noconfirm --needed \
         sudo curl git base-devel zsh ripgrep fd fzf neovim \
         starship zoxide zsh-autosuggestions zsh-syntax-highlighting && \

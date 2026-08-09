@@ -113,21 +113,25 @@ cht() {
 # FZF
 # ---------------------------------------------------------------------------
 if command -v fzf >/dev/null 2>&1; then
-    if [ -f /usr/share/doc/fzf/examples/key-bindings.bash ]; then
-        . /usr/share/doc/fzf/examples/key-bindings.bash
-    elif [ -f /usr/share/fzf/key-bindings.bash ]; then
-        . /usr/share/fzf/key-bindings.bash
-    elif [ -f /usr/share/fzf/shell/key-bindings.bash ]; then
-        . /usr/share/fzf/shell/key-bindings.bash
-    fi
+    case "$(ps -p $$ -o comm= 2>/dev/null)" in
+        bash|-bash|*/bash)
+            if [ -f /usr/share/doc/fzf/examples/key-bindings.bash ]; then
+                . /usr/share/doc/fzf/examples/key-bindings.bash
+            elif [ -f /usr/share/fzf/key-bindings.bash ]; then
+                . /usr/share/fzf/key-bindings.bash
+            elif [ -f /usr/share/fzf/shell/key-bindings.bash ]; then
+                . /usr/share/fzf/shell/key-bindings.bash
+            fi
 
-    if [ -f /usr/share/doc/fzf/examples/completion.bash ]; then
-        . /usr/share/doc/fzf/examples/completion.bash
-    elif [ -f /usr/share/fzf/completion.bash ]; then
-        . /usr/share/fzf/completion.bash
-    elif [ -f /usr/share/bash-completion/completions/fzf ]; then
-        . /usr/share/bash-completion/completions/fzf
-    fi
+            if [ -f /usr/share/doc/fzf/examples/completion.bash ]; then
+                . /usr/share/doc/fzf/examples/completion.bash
+            elif [ -f /usr/share/fzf/completion.bash ]; then
+                . /usr/share/fzf/completion.bash
+            elif [ -f /usr/share/bash-completion/completions/fzf ]; then
+                . /usr/share/bash-completion/completions/fzf
+            fi
+            ;;
+    esac
 
     export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
     export FZF_CTRL_T_OPTS="--preview 'bat --style=numbers --color=always {} 2>/dev/null || cat {}'"
@@ -137,12 +141,18 @@ fi
 # Starship Prompt
 # ---------------------------------------------------------------------------
 if command -v starship >/dev/null 2>&1; then
-    eval "$(starship init bash)"
+    case "$(ps -p $$ -o comm= 2>/dev/null)" in
+        zsh|*/zsh)  eval "$(starship init zsh)"  ;;
+        *)          eval "$(starship init bash)" ;;
+    esac
 fi
 
 # ---------------------------------------------------------------------------
 # Zoxide
 # ---------------------------------------------------------------------------
 if command -v zoxide >/dev/null 2>&1; then
-    eval "$(zoxide init bash --cmd cd)"
+    case "$(ps -p $$ -o comm= 2>/dev/null)" in
+        zsh|*/zsh)  eval "$(zoxide init zsh --cmd cd)"  ;;
+        *)          eval "$(zoxide init bash --cmd cd)" ;;
+    esac
 fi

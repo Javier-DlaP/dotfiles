@@ -5,9 +5,15 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -qq && \
     apt-get install -y -qq --no-install-recommends \
         sudo curl git ca-certificates gnupg lsb-release \
-        zsh ripgrep fzf fd-find build-essential && \
+        zsh ripgrep fzf fd-find build-essential locales && \
+    echo 'en_US.UTF-8 UTF-8' > /etc/locale.gen && \
+    locale-gen en_US.UTF-8 && \
+    update-locale LANG=en_US.UTF-8 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
 
 # starship
 RUN curl -sS https://starship.rs/install.sh | sh -s -- -y && \
