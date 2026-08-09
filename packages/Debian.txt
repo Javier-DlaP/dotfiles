@@ -3,6 +3,7 @@ git
 build-essential
 ripgrep
 fd-find
+fzf
 neovim
 zsh
 zsh-autosuggestions
