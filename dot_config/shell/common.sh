@@ -15,13 +15,7 @@ case "$(uname -s)" in
         PATH="$HOME/.local/bin:$PATH"
         ;;
     Darwin)
-        if [ -d /opt/homebrew/bin ]; then
-            PATH="/opt/homebrew/bin:$HOME/.local/bin:$PATH"
-        elif [ -d /usr/local/bin ]; then
-            PATH="/usr/local/bin:$HOME/.local/bin:$PATH"
-        else
-            PATH="$HOME/.local/bin:$PATH"
-        fi
+        PATH="/opt/homebrew/bin:$HOME/.local/bin:$PATH"
         ;;
 esac
 export PATH

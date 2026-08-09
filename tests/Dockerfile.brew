@@ -1,0 +1,7 @@
+FROM homebrew/brew:latest
+
+COPY packages/Brewfile /tmp/Brewfile
+
+RUN brew bundle --file=/tmp/Brewfile
+
+CMD ["echo", "Brewfile packages validated"]
