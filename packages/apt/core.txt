@@ -5,6 +5,5 @@ ripgrep
 fd-find
 fzf
 neovim
-zsh
-zsh-autosuggestions
-zsh-syntax-highlighting
+starship
+zoxide

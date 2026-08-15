@@ -24,7 +24,6 @@ export PATH
 # Common Aliases
 # ---------------------------------------------------------------------------
 alias ll='ls -alFh'
-alias keepawake='caffeinate -dimsu'
 alias oc='opencode'
 
 # ---------------------------------------------------------------------------
@@ -51,18 +50,50 @@ extract() {
 }
 
 keepawake() {
-    local cmd=("${@:-sleep}" "infinity")
-    [[ $# -gt 0 ]] && cmd=("$@")
-
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        caffeinate -dimsu "${cmd[@]}"
-    elif command -v systemd-inhibit &>/dev/null; then
-        systemd-inhibit --what=idle:sleep --who="keepawake" --why="User request" "${cmd[@]}"
-    else
-        echo "keepawake: systemd-inhibit or macOS required." >&2
-        return 1
+    if [ "$#" -eq 0 ]; then
+        set -- sleep infinity
     fi
+
+    case "$(uname -s)" in
+        Darwin)
+            caffeinate -dimsu "$@"
+            ;;
+        *)
+            if command -v systemd-inhibit >/dev/null 2>&1; then
+                systemd-inhibit --what=idle:sleep --who=keepawake --why="User request" "$@"
+            else
+                echo "keepawake: systemd-inhibit or macOS required." >&2
+                return 1
+            fi
+            ;;
+    esac
 }
+
+# ---------------------------------------------------------------------------
+# FZF (completion + key bindings) for both bash and zsh
+# ---------------------------------------------------------------------------
+if command -v fzf >/dev/null 2>&1; then
+    _fzf_shell=
+    if [ -n "${ZSH_VERSION:-}" ]; then
+        _fzf_shell=zsh
+    else
+        _fzf_shell=bash
+    fi
+
+    if fzf "--${_fzf_shell}" >/dev/null 2>&1; then
+        eval "$(fzf "--${_fzf_shell}")"
+    else
+        for _f in \
+            "/usr/share/fzf/shell/key-bindings.${_fzf_shell}" \
+            "/usr/share/fzf/shell/completion.${_fzf_shell}" \
+            "/usr/share/fzf/key-bindings.${_fzf_shell}" \
+            "/usr/share/fzf/completion.${_fzf_shell}"; do
+            [ -r "$_f" ] && . "$_f"
+        done
+        unset _f
+    fi
+    unset _fzf_shell
+fi
 
 # ---------------------------------------------------------------------------
 # Starship Prompt

@@ -9,18 +9,19 @@ OVERALL=0
 
 run_dotfiles_test() {
     local distro="$1"
-    local image="dotfiles-test-$distro"
+    local shell="$2"
+    local image="dotfiles-test-$distro-$shell"
 
     echo ""
-    echo -e "${CYAN}=== Testing: $distro ===${NC}"
+    echo -e "${CYAN}=== Testing: $distro (default shell: $shell) ===${NC}"
 
     echo -e "  Building Docker image ..."
-    if docker build -t "$image" -f "$SCRIPT_DIR/Dockerfile.$distro" "$REPO_DIR" > "/tmp/dotfiles-build-$distro.log" 2>&1; then
+    if docker build -t "$image" --build-arg "DEFAULT_SHELL=$shell" -f "$SCRIPT_DIR/Dockerfile.$distro" "$REPO_DIR" > "/tmp/dotfiles-build-$distro-$shell.log" 2>&1; then
         echo -e "  ${GREEN}Build OK${NC}"
     else
         echo -e "  ${RED}Build FAILED${NC}"
         echo "--- last 30 lines of build log ---"
-        tail -30 "/tmp/dotfiles-build-$distro.log"
+        tail -30 "/tmp/dotfiles-build-$distro-$shell.log"
         OVERALL=1
         return 1
     fi
@@ -57,7 +58,9 @@ main() {
     echo -e "${CYAN}chezmoi dotfiles - Docker test suite${NC}"
 
     for distro in debian arch; do
-        run_dotfiles_test "$distro" || true
+        for shell in bash zsh; do
+            run_dotfiles_test "$distro" "$shell" || true
+        done
     done
 
     run_brew_test || true

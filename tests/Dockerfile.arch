@@ -1,5 +1,8 @@
 FROM --platform=linux/amd64 archlinux/archlinux:latest
 
+ARG DEFAULT_SHELL=bash
+ENV SHELL=/bin/${DEFAULT_SHELL}
+
 RUN echo 'DisableSandbox' >> /etc/pacman.conf && \
     pacman -Syu --noconfirm --quiet && \
     pacman -S --noconfirm --needed sudo curl git && \
@@ -25,5 +28,10 @@ USER testuser
 WORKDIR /home/testuser
 
 RUN chezmoi apply --verbose 2>&1 || echo "[test] chezmoi apply completed with warnings"
+
+USER root
+RUN if [ "$DEFAULT_SHELL" = zsh ]; then usermod -s "$(command -v zsh)" testuser; fi
+
+USER testuser
 
 CMD ["/tmp/run-tests.sh"]

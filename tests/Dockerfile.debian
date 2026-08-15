@@ -1,6 +1,9 @@
 FROM debian:latest
 
+ARG DEFAULT_SHELL=bash
+
 ENV DEBIAN_FRONTEND=noninteractive
+ENV SHELL=/bin/${DEFAULT_SHELL}
 
 RUN apt-get update -qq && \
     apt-get install -y -qq --no-install-recommends \
@@ -32,5 +35,10 @@ USER testuser
 WORKDIR /home/testuser
 
 RUN chezmoi apply --verbose 2>&1 || echo "[test] chezmoi apply completed with warnings (expected on some packages)"
+
+USER root
+RUN if [ "$DEFAULT_SHELL" = zsh ]; then usermod -s "$(command -v zsh)" testuser; fi
+
+USER testuser
 
 CMD ["/tmp/run-tests.sh"]

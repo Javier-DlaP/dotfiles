@@ -31,5 +31,5 @@ and zoxide work across shells. Docker-based tests for each supported OS live
 in `tests/`.
 
 ```sh
-tests/run-tests.sh
+tests/test.sh
 ```

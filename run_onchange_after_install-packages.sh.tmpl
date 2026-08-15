@@ -1,12 +1,13 @@
 #!/bin/sh
-# chezmoi onchange script: installs packages based on host OS
+# chezmoi onchange script: installs packages based on host OS and shell.
+# Layout: packages/<pm>/{core,bash,zsh}.txt (apt/pacman) or .Brewfile (brew).
+# Linux installs core + the detected shell's set; macOS (brew) installs core +
+# zsh. The script's real exit status is preserved for chezmoi.
 
 set -e
 
 PACKAGES_DIR="${CHEZMOI_SOURCE_DIR:-$HOME/.local/share/chezmoi}/packages"
 LOG_FILE="${HOME}/.local/share/chezmoi/install-packages.log"
-
-mkdir -p "$(dirname "$LOG_FILE")"
 
 detect_os() {
     case "$(uname -s)" in
@@ -27,48 +28,51 @@ detect_os() {
     esac
 }
 
-install_debian() {
-    echo "[chezmoi] Detected Debian/Ubuntu. Installing packages with apt..."
-    sudo apt-get update -qq
-
-    if ! grep -rq "neovim-ppa" /etc/apt/sources.list.d/ 2>/dev/null; then
-        sudo apt-get install -y -qq software-properties-common 2>/dev/null || true
-        sudo add-apt-repository -y ppa:neovim-ppa/unstable 2>/dev/null || true
-        sudo apt-get update -qq
-    fi
-
-    # Packages handled by apt
-    xargs -a "$PACKAGES_DIR/Debian.txt" -I {} sh -c '
-        sudo apt-get install -y -qq "{}" 2>/dev/null || echo "  [warn] apt could not install: {}"
-    '
-
-    # starship
-    if ! command -v starship >/dev/null 2>&1; then
-        mkdir -p "$HOME/.local/bin"
-        curl -sS https://starship.rs/install.sh | sh -s -- -y -b "$HOME/.local/bin"
-    fi
-
-    # zoxide
-    if ! command -v zoxide >/dev/null 2>&1; then
-        curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
-    fi
-
-    echo "[chezmoi] Debian/Ubuntu packages installed."
+detect_shell() {
+    case "${SHELL:-}" in
+        *zsh) echo "zsh" ;;
+        *)    echo "bash" ;;
+    esac
 }
 
-install_arch() {
-    echo "[chezmoi] Detected Arch Linux. Installing packages with pacman..."
+install_apt() {
+    echo "[chezmoi] Installing packages with apt..."
+    sudo apt-get update -qq
+
+    for recipe in "core" "$(detect_shell)"; do
+        file="$PACKAGES_DIR/apt/$recipe.txt"
+        if [ ! -f "$file" ]; then
+            echo "  [warn] missing recipe file: $file"
+            continue
+        fi
+        echo "[chezmoi] Installing '$recipe' packages with apt..."
+        # shellcheck disable=SC2046,SC2086 # package names are simple, whitespace-free
+        if ! sudo apt-get install -y -qq --no-install-recommends $(tr '\n' ' ' < "$file"); then
+            echo "  [warn] apt could not install one or more '$recipe' packages"
+        fi
+    done
+}
+
+install_pacman() {
+    echo "[chezmoi] Installing packages with pacman..."
     sudo pacman -Syu --noconfirm --needed --quiet
 
-    xargs -a "$PACKAGES_DIR/Arch.txt" -I {} sh -c '
-        sudo pacman -S --noconfirm --needed "{}" 2>/dev/null || echo "  [warn] pacman could not install: {}"
-    '
-
-    echo "[chezmoi] Arch Linux packages installed."
+    for recipe in "core" "$(detect_shell)"; do
+        file="$PACKAGES_DIR/pacman/$recipe.txt"
+        if [ ! -f "$file" ]; then
+            echo "  [warn] missing recipe file: $file"
+            continue
+        fi
+        echo "[chezmoi] Installing '$recipe' packages with pacman..."
+        # shellcheck disable=SC2046,SC2086 # package names are simple, whitespace-free
+        if ! sudo pacman -S --noconfirm --needed $(tr '\n' ' ' < "$file"); then
+            echo "  [warn] pacman could not install one or more '$recipe' packages"
+        fi
+    done
 }
 
 install_darwin() {
-    echo "[chezmoi] Detected macOS. Installing packages with Homebrew..."
+    echo "[chezmoi] Installing packages with Homebrew..."
 
     if ! command -v brew >/dev/null 2>&1; then
         echo "[chezmoi] Homebrew not found. Installing Homebrew..."
@@ -78,26 +82,42 @@ install_darwin() {
         fi
     fi
 
-    brew bundle --file="$PACKAGES_DIR/Brewfile"
-
-    echo "[chezmoi] macOS packages installed."
+    for upstreamfile in "core" "zsh"; do
+        file="$PACKAGES_DIR/brew/$upstreamfile.Brewfile"
+        if [ ! -f "$file" ]; then
+            echo "  [warn] missing recipe file: $file"
+            continue
+        fi
+        echo "[chezmoi] Installing '$upstreamfile' packages with Homebrew..."
+        if ! brew bundle --file="$file"; then
+            echo "  [warn] brew bundle could not install the '$upstreamfile' packages"
+        fi
+    done
 }
 
 main() {
     OS=$(detect_os)
-    echo "[chezmoi] Detected OS: $OS" | tee "$LOG_FILE"
+    echo "[chezmoi] Detected OS: $OS"
 
     case "$OS" in
-        debian) install_debian 2>&1 | tee -a "$LOG_FILE" ;;
-        arch)   install_arch   2>&1 | tee -a "$LOG_FILE" ;;
-        darwin) install_darwin 2>&1 | tee -a "$LOG_FILE" ;;
+        debian) install_apt ;;
+        arch)   install_pacman ;;
+        darwin) install_darwin ;;
         *)
-            echo "[chezmoi] OS '$OS' is not supported for automatic package installation." | tee -a "$LOG_FILE"
-            echo "[chezmoi] Please install manually: curl git ripgrep fd fzf neovim zsh starship zoxide zsh-autosuggestions zsh-syntax-highlighting" | tee -a "$LOG_FILE"
+            echo "[chezmoi] OS '$OS' is not supported for automatic package installation."
+            echo "[chezmoi] Please install manually: curl git ripgrep fd fzf neovim bash zsh starship zoxide zsh-autosuggestions zsh-syntax-highlighting"
             ;;
     esac
 
-    echo "[chezmoi] Package installation complete." | tee -a "$LOG_FILE"
+    echo "[chezmoi] Package installation complete."
 }
 
-main
+mkdir -p "$(dirname "$LOG_FILE")"
+if output=$(main 2>&1); then
+    rc=0
+else
+    rc=$?
+fi
+printf '%s\n' "$output"
+printf '%s\n' "$output" >> "$LOG_FILE"
+exit "$rc"

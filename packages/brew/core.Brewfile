@@ -1,0 +1,7 @@
+brew "git"
+brew "ripgrep"
+brew "fd"
+brew "fzf"
+brew "neovim"
+brew "starship"
+brew "zoxide"

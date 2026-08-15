@@ -1,7 +1,9 @@
 FROM homebrew/brew:latest
 
-COPY packages/Brewfile /tmp/Brewfile
+COPY packages/brew/core.Brewfile /tmp/core.Brewfile
+COPY packages/brew/zsh.Brewfile /tmp/zsh.Brewfile
 
-RUN brew bundle --file=/tmp/Brewfile
+RUN brew bundle --file=/tmp/core.Brewfile && \
+    brew bundle --file=/tmp/zsh.Brewfile
 
 CMD ["echo", "Brewfile packages validated"]

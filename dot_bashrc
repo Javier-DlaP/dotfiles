@@ -6,15 +6,6 @@ if [ -f "$HOME/.config/shell/common.sh" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Bash-specific: ble.sh (Bash Line Editor)
-# ---------------------------------------------------------------------------
-if [ -f /usr/share/blesh/ble.sh ]; then
-    . /usr/share/blesh/ble.sh
-elif [ -f "$HOME/.local/share/blesh/ble.sh" ]; then
-    . "$HOME/.local/share/blesh/ble.sh"
-fi
-
-# ---------------------------------------------------------------------------
 # Bash-specific: bash-completion
 # ---------------------------------------------------------------------------
 if [ -f /usr/share/bash-completion/bash_completion ]; then

@@ -1,0 +1,9 @@
+base-devel
+curl
+git
+ripgrep
+fd
+fzf
+neovim
+starship
+zoxide
