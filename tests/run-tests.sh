@@ -38,6 +38,19 @@ check "~/.bashrc exists"                     test -f "$HOME/.bashrc"
 check "~/.zshrc exists"                      test -f "$HOME/.zshrc"
 check "~/.config/shell/common.sh exists"     test -f "$HOME/.config/shell/common.sh"
 check "~/.config/starship.toml exists"       test -f "$HOME/.config/starship.toml"
+check "~/.config/nvim exists"                test -d "$HOME/.config/nvim"
+check "~/.config/nvim/init.lua exists"       test -f "$HOME/.config/nvim/init.lua"
+
+echo ""
+echo "--- Neovim config ---"
+check "init.lua is readable"                 test -r "$HOME/.config/nvim/init.lua"
+if grep -qi 'lazy.nvim' "$HOME/.config/nvim/init.lua"; then
+    echo -e "  ${GREEN}PASS${NC} init.lua bootstraps lazy.nvim"
+    PASS=$((PASS + 1))
+else
+    echo -e "  ${RED}FAIL${NC} init.lua bootstraps lazy.nvim"
+    FAIL=$((FAIL + 1))
+fi
 
 echo ""
 echo "--- common.sh loads in default shell ($SHELL_NAME) ---"
@@ -60,9 +73,6 @@ check "fzf runs"                             fzf --version
 
 echo ""
 echo "--- Shell integration in default shell ($SHELL_NAME) ---"
-if "$SHELL_NAME" -c 'command -v starship >/dev/null' && starship --version >/dev/null 2>&1; then
-    :
-fi
 if "$SHELL_NAME" -c 'eval "$(starship init '"$SHELL_NAME"')"' 2>&1; then
     echo -e "  ${GREEN}PASS${NC} starship init ${SHELL_NAME} works"
     PASS=$((PASS + 1))
