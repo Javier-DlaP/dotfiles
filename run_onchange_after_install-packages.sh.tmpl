@@ -13,13 +13,10 @@ detect_os() {
     case "$(uname -s)" in
         Darwin) echo "darwin" ;;
         Linux)
-            if [ -f /etc/os-release ]; then
-                . /etc/os-release
-                case "$ID" in
-                    debian|ubuntu|linuxmint|pop|elementary|zorin) echo "debian" ;;
-                    arch|manjaro|endeavouros|cachyos) echo "arch" ;;
-                    *) echo "unknown-linux" ;;
-                esac
+            if command -v apt-get >/dev/null 2>&1; then
+                echo "debian"
+            elif command -v pacman >/dev/null 2>&1; then
+                echo "arch"
             else
                 echo "unknown-linux"
             fi
