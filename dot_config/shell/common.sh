@@ -80,6 +80,14 @@ if command -v fzf >/dev/null 2>&1; then
         _fzf_shell=bash
     fi
 
+    # Color theme for fzf in both shells (only when the user hasn't set one)
+    case "${FZF_DEFAULT_OPTS:-}" in
+        *--color*) ;;
+        *)
+            export FZF_DEFAULT_OPTS="${FZF_DEFAULT_OPTS:+${FZF_DEFAULT_OPTS} }--color=bg+:-1,pointer:blue,border:blue,header:blue,info:cyan,marker:yellow,prompt:cyan,hl:magenta,hl+:magenta,bg:-1,fg:-1"
+            ;;
+    esac
+
     if fzf "--${_fzf_shell}" >/dev/null 2>&1; then
         eval "$(fzf "--${_fzf_shell}")"
     else
