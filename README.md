@@ -18,7 +18,7 @@ chezmoi init --apply --source <path-to-this-repo>
 On a new machine, bootstrap chezmoi and apply the repo:
 
 ```sh
-sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply <github-username>
+sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply Javier-DlaP
 ```
 
 Package installation runs automatically after apply, detecting the OS

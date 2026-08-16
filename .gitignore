@@ -1,5 +1,6 @@
 # chezmoi
 .chezmoi*.toml
+bin
 
 # OS
 .DS_Store
